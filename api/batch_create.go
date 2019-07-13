@@ -27,7 +27,7 @@ func estimateDuration(d *lib.Dao, title string, f func(d *lib.Dao) error) (err e
 }
 
 func main() {
-	db, err := bolt.Open("1.DB", 0600, &bolt.Options{
+	db, err := bolt.Open("1.db", 0600, &bolt.Options{
 		// 进程 Open DB 会给 DB 文件加锁，只有一个进
 		Timeout:    0,
 		NoGrowSync: false,
@@ -48,7 +48,7 @@ func main() {
 	n := 1000
 
 	_ = estimateDuration(d, "insert data one by one", func(d *lib.Dao) error {
-		return d.GenerateFakeData(n)
+		return d.GenerateFakeUserData(n)
 	})
 
 	for ng := 1; ng <= 100; ng++ {

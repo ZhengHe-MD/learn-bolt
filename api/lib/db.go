@@ -10,18 +10,24 @@ import (
 
 const (
 	BucketUsers = "Users"
+	BucketEvents = "Events"
 )
 
-var Buckets = []string{BucketUsers}
+var Buckets = []string{
+	BucketUsers,
+	BucketEvents,
+}
 
 type Dao struct {
 	Users   *UserDao
+	Events  *EventDao
 	Buckets *BucketDao
 }
 
 func NewDao(db *bolt.DB) *Dao {
 	return &Dao{
 		Users:   NewUserDao(db),
+		Events:  NewEventDao(db),
 		Buckets: NewBucketDao(db),
 	}
 }
@@ -58,7 +64,18 @@ func newFakeUser() *User {
 	}
 }
 
-func (d *Dao) GenerateFakeData(n int) error {
+func newFakeEvent() *Event {
+	return &Event{
+		Time:   randInt64Range(
+			time.Now().Unix()-60*60*24*365,
+			time.Now().Unix()),
+		Name:   gofakeit.Name(),
+		Type:   gofakeit.Uint8(),
+		Cancel: gofakeit.Bool(),
+	}
+}
+
+func (d *Dao) GenerateFakeUserData(n int) error {
 	for i := 0; i < n; i++ {
 		if err := d.Users.CreateUser(newFakeUser()); err != nil {
 			return err
@@ -67,9 +84,27 @@ func (d *Dao) GenerateFakeData(n int) error {
 	return nil
 }
 
-func (d *Dao) GenerateFakeDataInBatch(n int) error {
+func (d *Dao) GenerateFakeEventData(n int) error {
+	for i := 0; i < n; i++ {
+		if err := d.Events.CreateEvent(newFakeEvent()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *Dao) generateFakeUserDataInBatch(n int) error {
 	for i := 0; i < n; i++ {
 		if err := d.Users.CreateUserInBatch(newFakeUser()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *Dao) generateFakeEventDataInBatch(n int) error {
+	for i := 0; i < n; i++ {
+		if err := d.Events.CreateEventInBatch(newFakeEvent()); err != nil {
 			return err
 		}
 	}
@@ -82,7 +117,20 @@ func (d *Dao) GenerateFakeDataConcurrently(n int, ng int) error {
 	wg.Add(ng)
 	for i := 0; i < ng; i++ {
 		go func() {
-			_ = d.GenerateFakeDataInBatch(n/ng)
+			_ = d.generateFakeUserDataInBatch(n/ng)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	return nil
+}
+
+func (d *Dao) GenerateFakeEventConcurrently(n int, ng int) error {
+	var wg sync.WaitGroup
+	wg.Add(ng)
+	for i := 0; i < ng; i++ {
+		go func() {
+			_ = d.generateFakeEventDataInBatch(n/ng)
 			wg.Done()
 		}()
 	}

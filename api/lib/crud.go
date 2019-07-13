@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/boltdb/bolt"
 )
@@ -105,6 +106,61 @@ func (d *UserDao) DeleteUserByID(id uint64) error {
 		b := tx.Bucket([]byte(BucketUsers))
 		return b.Delete(uint64tob(id))
 	})
+}
+
+type Event struct {
+	Time int64
+	Name string
+	Type uint8
+	Cancel bool
+}
+
+type EventDao struct {
+	DB *bolt.DB
+}
+
+func NewEventDao(db *bolt.DB) *EventDao {
+	return &EventDao{db}
+}
+
+func (d *EventDao) genCreateEventFunc(event *Event) func(*bolt.Tx) error {
+	return func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(BucketEvents))
+
+		buf, err := json.Marshal(event)
+		if err != nil {
+			return err
+		}
+
+		return b.Put(uint64tob(uint64(event.Time)), buf)
+	}
+}
+
+func (d *EventDao) CreateEventInBatch(event *Event) error {
+	return d.DB.Batch(d.genCreateEventFunc(event))
+}
+
+func (d *EventDao) CreateEvent(event *Event) error {
+	return d.DB.Update(d.genCreateEventFunc(event))
+}
+
+func (d *EventDao) GetEventsBetween(start, end int64) (events []*Event, err error) {
+	err = d.DB.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte(BucketEvents)).Cursor()
+
+		min := uint64tob(uint64(start))
+		max := uint64tob(uint64(end))
+
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			var event Event
+			if err := json.Unmarshal(v, &event); err != nil {
+				return err
+			}
+			events = append(events, &event)
+		}
+		return nil
+	})
+	return
 }
 
 type BucketDao struct {
