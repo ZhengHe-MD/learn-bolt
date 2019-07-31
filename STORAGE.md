@@ -44,7 +44,7 @@ ID       TYPE       ITEMS  OVRFLW
 
 可以看到， 一个空的 boltDB 实例由 4 个 page 构成，其中 2 个 meta page、1 个 freelist page 和 1 个 leaf page，换一种方式看，就是：
 
-![db_layout](/Users/hezheng/Desktop/Screen Shot 2019-07-14 at 6.22.47 PM.jpg)
+![db_layout](./statics/imgs/storage_db_layout.jpg)
 
 下一个问题很自然的就是：
 
@@ -75,7 +75,7 @@ type page struct {
 
 换一种方式看，就是：
 
-![page_header](/Users/hezheng/Desktop/Screen Shot 2019-07-14 at 11.39.36 PM.jpg)
+![page_header](./statics/imgs/storage_page_header.jpg)
 
 这里需要注意：当 kv 数据过大，一个 page 放不下时，就会造成数据溢出当前 page，具体溢出多少个 page 与 kv 数据的大小相关，overflow 用来记录的就是实际溢出的 page 数量。
 
@@ -83,7 +83,7 @@ type page struct {
 
 meta page 是 boltDB 的入口，它的结构如下图所示：
 
-![meta_page_layout](/Users/hezheng/Desktop/Screen Shot 2019-07-14 at 6.32.05 PM.jpg)
+![meta_page_layout](./statics/imgs/storage_meta_page_layout.jpg)
 
 ##### magic&version&checksum
 
@@ -122,7 +122,7 @@ boltDB 是纯 kv 存储，它包含以下特点：
 
 利用 bucket 嵌套的特点，boltDB 初始化后会建立一个 root bucket，用来盛放新创建的 buckets，如下图所示：
 
-![bucket-hierarchy](/Users/hezheng/Desktop/Screen Shot 2019-07-14 at 8.46.58 PM.jpg)
+![bucket-hierarchy](./statics/imgs/storage_bucket_hierarchy.jpg)
 
 meta 中的 root 就是 root bucket。
 
@@ -169,7 +169,7 @@ func (m *meta) write(p *page) {
 
 freelist 中存储的内容很简单，就是一个 page id 列表，如下图所示：
 
-![freelist_page_layout](/Users/hezheng/Desktop/Screen Shot 2019-07-14 at 11.45.00 PM.jpg)
+![freelist_page_layout](./statics/imgs/storage_freelist_page_layout.jpg)
 
 但一个 page 只有 4K，最多只能存放 1K 个 page id，显然可分配空间只有 4MB 肯定不够，如何解决这个问题呢？boltDB 的做法很有意思，它利用了 page header 中的 count 字段，若 count 取值为 uint16 的最大值 (0xFFFF)，则认为该 freelist page 还有 overflow page，并以 page header 之后的第一个 uint64 数值表示 freelist 的总长度。在 boltDB 中，这些 freelist pages 会被连续地存储在 meta pages 后面，因此可以通过总长度一次性存取。
 
@@ -184,11 +184,11 @@ boltDB 使用 B+ 树存储索引和 kv 数据本身，这里的 branch 和 leaf 
 
 branch page 是中间节点，每个 B+ 树中间节点需要存储若干键值 (k/v 中的 k)，用来表示子节点键值的上界与下界；同时，由于键的大小不一，branch page 的存储结构还需要包容不同大小的键。综合考虑，boltDB 中 branch page 的结构如下图所示：
 
-![branch_page](/Users/hezheng/Desktop/Screen Shot 2019-07-15 at 10.01.46 AM.jpg)
+![branch_page](./statics/imgs/storage_branch_page.jpg)
 
 将 page element header 顺序排列在 page header 之后，然后依次放置变长的键。其中 page element header 的结构如下图所示：
 
-![branch_page_element_header](/Users/hezheng/Desktop/Screen Shot 2019-07-15 at 9.53.37 AM.jpg)
+![branch_page_element_header](./statics/imgs/storage_branch_page_element_header.jpg)
 
 pos 记录键的位置，ksize 记录键的长度，pgid 记录子节点所在的 page id。
 
@@ -196,11 +196,11 @@ pos 记录键的位置，ksize 记录键的长度，pgid 记录子节点所在�
 
 leaf page 是叶子节点，每个 B+ 树的叶子节点需要存储实际的 kv 数据；同样的，由于键和值的大小都不固定，leaf page 的存储结构也需要包容变长的键值对。综合考虑，boltDB 中的 leaf page 最终如下图所示：
 
-![leaf_page](/Users/hezheng/Desktop/Screen Shot 2019-07-15 at 12.47.03 PM.jpg)
+![leaf_page](./statics/imgs/storage_leaf_page.jpg)
 
 与 branch page 类似，leaf page 将 page element header 列表顺序排列在 page header 之后，然后依次放置变长的键值对。其中 page element header 的结构如下图所示：
 
-![leaf_page_element_header](/Users/hezheng/Desktop/Screen Shot 2019-07-15 at 12.47.41 PM.jpg)
+![leaf_page_element_header](./statics/imgs/storage_leaf_page_element_header.jpg)
 
 pos 记录键的位置，ksize 与 vsize 分别记录键值的长度，flags 作为保留字段，同时方便对齐。
 
@@ -423,7 +423,7 @@ type freelist struct {
 
 **为什么 page 还需要一个待释放状态？**为了支持 MVCC（Multiversion Concurrency Control）。举例如下图所示：
 
-![MVCC](/Users/hezheng/Desktop/Screen Shot 2019-07-23 at 9.31.03 AM.jpg)
+![MVCC](./statics/imgs/storage_mvcc.jpg)
 
 当读写事务 A 执行完毕后，读事务 B 开始执行，若紧接着读写事务 C 开始执行，C 就可能修改 B 想要读取的数据，而 B 实际上只想读取 A 执行完毕之后、C 开始执行之前的数据，因此这时候 boltDB 不应该将 A 获取的存储空间释放到 freelist 中允许被分配，而将它置于即将释放的状态，等待 B 读取完成后再彻底释放，否则如果 C 修改了相关数据，B 就可能读到 C 执行完毕后的数据，这不符合 MVCC 的语义。
 

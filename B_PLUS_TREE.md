@@ -48,11 +48,11 @@ leaf node：
 
 插入数据可能造成 node 中的数据超过单个 page 大小：
 
-![oversize-page](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 12.17.22 PM.jpg)
+![oversize-page](./statics/imgs/b_plus_tree_oversize_page.jpg)
 
 同时也要考虑单个键值对数据过大的情况：
 
-![oversized-kv](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 12.21.22 PM.jpg)
+![oversized-kv](./statics/imgs/b_plus_tree_oversized_kv.jpg)
 
 
 
@@ -60,7 +60,7 @@ leaf node：
 
 删除数据可能使得 node 处于不平衡的状态，即键值对删除后 node 中的总数据量少于最低要求（由 FillPercent 决定）：
 
-![unbalanced-node](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 2.26.38 PM.jpg)
+![unbalanced-node](./statics/imgs/b_plus_tree_unbalanced_node.jpg)
 
 删除操作本身不执行 merge 操作，但它会在结束前将该 node 标记为 unbalanced，等到数据将要写入磁盘时再统一处理。
 
@@ -77,15 +77,15 @@ leaf node：
 
 执行过删除操作的 leaf node 都会被打上 unbalanced 的记号，而这些记号的消费者正是 rebalance，它负责将填充率不足 FillPercent 的 node 与对应的 sibling node 合并，以下图为例（图中虚线为填充率）：
 
-![rebalance-1](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 7.31.14 PM.jpg)
+![rebalance-1](./statics/imgs/b_plus_tree_rebalance_1.jpg)
 
 当 L2 的数据总量不足，rebalance 找到它的 sibling node L3，将二者合并，并更新它们的 parent node B2：
 
-![rebalance-2](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 7.34.30 PM.jpg)
+![rebalance-2](./statics/imgs/b_plus_tree_rebalance_2.jpg)
 
 这时，B2 的数据总量也下降到 FillPercent 之下，rebalance 需要递归地继续合并 B2 与 B3：
 
-![rebalance-3](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 7.38.02 PM.jpg)
+![rebalance-3](./statics/imgs/b_plus_tree_rebalance_3.jpg)
 
 如果有必要，这样的递归过程将持续到 root node 为止。
 
@@ -101,21 +101,21 @@ rebalance 之后，内存中的 B+Tree 满足：所有 nodes 的数据填充率�
 
 spill 本意是 ”水太满而从容器中溢出“，这里指的就是 node 中负载的数据太多，溢出到多个 page，举例如下：
 
-![spill-1](/Users/hezheng/Desktop/Screen Shot 2019-07-30 at 10.16.19 AM.jpg)
+![spill-1](./statics/imgs/b_plus_tree_spill_1.jpg)
 
 显然 L1 中填充率过高，spill 需要将它拆分成多个 nodes：
 
-![spill-2](/Users/hezheng/Desktop/Screen Shot 2019-07-30 at 10.17.15 AM.jpg)
+![spill-2](./statics/imgs/b_plus_tree_spill_2.jpg)
 
 拆分 L1的过程会导致它的 parent node 填充率升高，进而可能引发 parent node 的拆分：
 
-![spill-3](/Users/hezheng/Desktop/Screen Shot 2019-07-30 at 10.18.35 AM.jpg)
+![spill-3](./statics/imgs/b_plus_tree_spill_3.jpg)
 
 如果有必要，这样的递归会到达 root node 为止。
 
 parent node 超载的原因除了键值对数量过多，也可能是单个数据过大，如达到多个 pages 大小，这是 spill 不会再将 node 拆分，而是保留这些超载的 node：
 
-![spill-4](/Users/hezheng/Desktop/Screen Shot 2019-07-30 at 10.32.28 AM.jpg)
+![spill-4](./statics/imgs/b_plus_tree_spill_4.jpg)
 
 在序列化时，这种超载的 node 会被转化为多个 overflow page 存储。
 
