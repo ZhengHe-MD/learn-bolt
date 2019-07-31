@@ -12,19 +12,19 @@
 
 B+Tree中的每个 node 的结构都由 header, element header 列表及数据列表依次构成，branch node 中存储的数据为键，leaf node 中存储的数据为键值对：
 
-![branch/leaf page](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 10.00.17 AM.jpg)
+![branch/leaf page](./statics/imgs/b_plus_tree_branch_leaf_page.jpg)
 
 将上图进一步简化，得到 branch node：
 
-![branch page/node](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 9.50.30 AM.jpg)
+![branch page/node](./statics/imgs/b_plus_tree_branch_page_node.jpg)
 
 leaf node：
 
-![leaf page/node](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 9.50.52 AM.jpg)
+![leaf page/node](./statics/imgs/b_plus_tree_leaf_page_node.jpg)
 
 利用 branch node 和 leaf node 就能够组建出一棵合法的 B+Tree：
 
-![b+tree](/Users/hezheng/Desktop/Screen Shot 2019-07-29 at 9.51.31 AM.jpg)
+![b+tree](./statics/imgs/b_plus_tree.jpg)
 
 这棵树的特性罗列如下：
 
