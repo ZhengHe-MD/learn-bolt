@@ -4,6 +4,7 @@ bucket 是 boltDB 中键值对数据的容器，它使得开发者可以在同�
 
 * Bucket 的逻辑结构
 * Bucket 的物理结构
+* Cursor
 
 ## Bucket 的逻辑结构
 
@@ -111,6 +112,68 @@ type bucket struct {
 假设用户继续创建更多像 b1 一样的 bucket，直到一个 leaf 节点也无法容纳 root bucket 的所有子节点，这时 root bucket 自身也将长成一棵更茂盛的 B+Tree：
 
 ![root-bucket-tree](./statics/imgs/bucket-root-bucket-tree.jpg)
+
+## Cursor
+
+cursor 是 bucket 的导游，可以帮助用户顺序或着随机访问 bucket 中的键值数据，它对外提供的方法包括：
+
+```go
+// 移动 cursor 到 bucket 中的第一个键值对，并返回键值数据
+func (c *Cursor) First() (key []byte, value []byte)
+// 移动 cursor 到 bucket 中的最后一个键值对，并返回键值数据
+func (c *Cursor) Last() (key []byte, value []byte)
+// 移动 cursor 到下一个键值对，并返回键值数据
+func (c *Cursor) Next() (key []byte, value []byte)
+// 移动 cursor 到上一个键值对，并返回键值数据
+func (c *Cursor) Prev() (key []byte, value []byte)
+// 移动 cursor 到给定键所在位置，并返回键值数据
+func (c *Cursor) Seek(seek []byte) (key []byte, value []byte)
+// 删除 cursor 所在位置的键值数据
+func (c *Cursor) Delete() error
+```
+
+在上一节的介绍中，我们已经知道 boltDB 中的每个 bucket 的逻辑结构都是 B+Tree，因此 cursor 在 bucket 中游走的过程，就是在 B+Tree 上检索和遍历的过程。通常，在树形数据结构上遍历的算法有递归和迭代两种实现，前者代码可读性强，后者运行时更节约内存空间。下面是 cursor 的结构体：
+
+```go
+type Cursor struct {
+  bucket *Bucket
+  stack  []elemRef
+}
+```
+
+从中可以看出，boltDB 的 cursor 选择了迭代的实现方法，将栈放进结构体中。遍历键值数据的过程就是深度优先搜索的过程，因为 B+Tree 的中间节点不直接存储键值数据，因此遍历过程没有前序、中序、后序的区别。
+
+值得一提的是，cursor 在遍历数据的过程中，不会自动进入嵌套 buckets 内部，[举例](./bucket/visitkv.go)如下：
+
+```go
+// bucket/visitkv.go
+func main() {
+	// init db
+	// ignore errors for simplicity
+	_ = db.Update(func(tx *bolt.Tx) error {
+		b1, _ := tx.CreateBucketIfNotExists([]byte("b1"))
+		_, _ = b1.CreateBucketIfNotExists([]byte("b11"))
+		_ = b1.Put([]byte("k1"), []byte("v1"))
+		_ = b1.Put([]byte("k2"), []byte("v2"))
+
+		return b1.ForEach(func(k, v []byte) error {
+			fmt.Println(string(k), string(v))
+			return nil
+		})
+	})
+}
+```
+
+执行程序：
+
+```sh
+$ go run visitkv.go
+b11 
+k1 v1
+k2 v2
+```
+
+可以看到，当遇到内部嵌套的 b11 bucket 时，返回的值为空。
 
 ## 小结
 
