@@ -28,7 +28,7 @@ func main() {
 		_ = b1.Put([]byte("k2"), []byte("v2"))
 
 		return b1.ForEach(func(k, v []byte) error {
-			fmt.Println(string(k), string(v))
+			fmt.Printf("key: %s, val: %s, nil: %v\n", k, v, v == nil)
 			return nil
 		})
 	})
