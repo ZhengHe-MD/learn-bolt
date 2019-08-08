@@ -41,7 +41,7 @@ boltDB 就在 root bucket 上创建了一个新的键值对，键为 bucket1，�
 
 ## Bucket 的物理结构
 
-在 [B+Tree](./B_PLUS_TREE.md) 一节中介绍到 boltDB 使用 B+Tree 存储键值数据及其索引，那么 boltDB 是如何利用 B+Tree 实现 bucket 的抽象呢？我们从最简单的情形开始理解：
+在 [B+ 树](./B_PLUS_TREE.md) 一节中介绍到 boltDB 使用 B+ 树存储键值数据及其索引，那么 boltDB 是如何利用 B+ 树实现 bucket 的抽象呢？我们从最简单的情形开始理解：
 
 ### 初始化 DB
 
@@ -103,13 +103,13 @@ type bucket struct {
 
 ![normal-bucket](./statics/imgs/bucket-normal-bucket.jpg)
 
-插入更多的键值数据，bucket b1 就会长成一棵更茂盛的 B+Tree：
+插入更多的键值数据，bucket b1 就会长成一棵更茂盛的 B+ 树：
 
 ![normal-bucket-b-plus-tree](./statics/imgs/bucket-normal-bucket-b-plus-tree.jpg)
 
 ### 创建更多的 buckets
 
-假设用户继续创建更多像 b1 一样的 bucket，直到一个 leaf 节点也无法容纳 root bucket 的所有子节点，这时 root bucket 自身也将长成一棵更茂盛的 B+Tree：
+假设用户继续创建更多像 b1 一样的 bucket，直到一个 leaf 节点也无法容纳 root bucket 的所有子节点，这时 root bucket 自身也将长成一棵更茂盛的 B+ 树：
 
 ![root-bucket-tree](./statics/imgs/bucket-root-bucket-tree.jpg)
 
@@ -132,7 +132,14 @@ func (c *Cursor) Seek(seek []byte) (key []byte, value []byte)
 func (c *Cursor) Delete() error
 ```
 
-在上一节的介绍中，我们已经知道 boltDB 中的每个 bucket 的逻辑结构都是 B+Tree，因此 cursor 在 bucket 中游走的过程，就是在 B+Tree 上检索和遍历的过程。通常，在树形数据结构上遍历的算法有递归和迭代两种实现，前者代码可读性强，后者运行时更节约内存空间。下面是 cursor 的结构体：
+它们可以被分为两类：
+
+* 顺序访问/遍历：First、Last、Next、Prev
+* 随机访问/检索：Seek
+
+### 顺序访问/遍历
+
+我们已经知道 boltDB 实例中每个 bucket 的逻辑结构都是 B+ 树，因此遍历 bucket 中数据的过程，就是遍历对应 B+ 树的过程。通常，在树形数据结构上遍历的算法从实现上可以分为递归和迭代两种，前者具有更强的可读性，后者在运行时更节约栈空间，但 B+ 树通常由于单个节点较大，整棵树呈矮胖状，在递归时不会占用过多的栈空间，因此这里无需考虑节约栈空间。但因为 cursor 在使用的过程中，并不会一定会一次性遍历完所有数据，因此 cursor 需要在每次定位之后记录当前位置信息，因此实现上 boltDB 仍然使用了递归的方式。这点也可以从 curso结构体 Cursor 上观察到：
 
 ```go
 type Cursor struct {
@@ -141,9 +148,7 @@ type Cursor struct {
 }
 ```
 
-从中可以看出，boltDB 的 cursor 选择了迭代的实现方法，将栈放进结构体中。遍历键值数据的过程就是深度优先搜索的过程，因为 B+Tree 的中间节点不直接存储键值数据，因此遍历过程没有前序、中序、后序的区别。
-
-值得一提的是，cursor 在遍历数据的过程中，不会自动进入嵌套 buckets 内部，[举例](./bucket/visitkv.go)如下：
+将栈放进结构体中，方便 cursor 记录上一次所在的位置信息。B+ 树的中间节点不直接存储键值数据，因此遍历过程没有前序、中序、后序的区别。bucket 内部可能嵌套其它 buckets，cursor 在返回数据时，如果遇到值是 bucket 的情况，就会将其置为 nil，巧妙地区分两种情况。我们可以通过以下[例子](./bucket/visitkv.go)观察到这点：
 
 ```go
 // bucket/visitkv.go
@@ -157,7 +162,7 @@ func main() {
 		_ = b1.Put([]byte("k2"), []byte("v2"))
 
 		return b1.ForEach(func(k, v []byte) error {
-			fmt.Println(string(k), string(v))
+      fmt.Printf("key: %s, val: %s, nil: %v\n", k, v, v == nil)
 			return nil
 		})
 	})
@@ -168,13 +173,27 @@ func main() {
 
 ```sh
 $ go run visitkv.go
-b11 
-k1 v1
-k2 v2
+key: b11, val: , nil: true
+key: k1, val: v1, nil: false
+key: k2, val: v2, nil: false
 ```
 
-可以看到，当遇到内部嵌套的 b11 bucket 时，返回的值为空。
+可以看到，当遇到 b11 bucket 时，返回的值为 nil。
+
+### 随机访问/检索
+
+由于 B+ 树上所有数据都按照键的字节序排列，因此检索的过程与二叉查找树相似。与二叉查找树不同，B+ 树上单个节点通常较大，存放数据较多，因此在每个节点上检索时会使用二分查找来提高检索效率。我们可以估算检索的算法复杂度，如下图所示：
+
+![search-time-complexity](./statics/imgs/search-time-complexity.jpg)
+
+设数据的总数为 N，单个节点能够容纳的键值对数量上限为 C，那么单个节点的查找复杂度为 Clog(C)，树的高度为 log(N)，整个检索过程的时间复杂度为 Clog(C)log(N)。在 CMU 15-445 的 Tree Index 一节中的数据显示，在实践中，一棵 3 层的 B+ 树可以容纳 2,406,104 条数据，而一棵 4 层的 B+ 树可以容纳 312,900,721 条数据，尽管这里的绝对数值没有参考意义（与 page 大小和单个键值数据平均大小有关），我们可以认为通常 B+ 树的高度为常数，因此整个检索的算法复杂度可以近似为 O(1)。
+
+值得一提的是，在实现中，curser 在 seek 时采用递归算法，且都是尾递归，具体可查阅源码。
 
 ## 小结
 
-本节介绍 boltDB 中键值数据的容器（bucket）的逻辑结构和物理结构。逻辑上，每个 boltDB 实例保持一个 root bucket，内部盛放所有用户创建的 buckets，用户可以在这些 buckets 中插入普通键值数据或者按需继续嵌套地创建 buckets。这时，整个实例中存储的数据可以被看作是一个 bucket tree；物理上，每个 bucket 实际上是一棵 B+Tree，这些 B+Tree 根据逻辑结构的嵌套关系共同组成一棵巨大的树（不一定是 B+Tree）。
+本节介绍 boltDB 中键值数据的容器（bucket）的逻辑结构、物理结构以及如何访问 bucket 中的数据：
+
+* 逻辑上，每个 boltDB 实例保持一个 root bucket，内部盛放所有用户创建的 buckets，用户可以在这些 buckets 中插入普通键值数据或者按需继续嵌套地创建 buckets。这时，整个实例中存储的数据可以被看作是一个 bucket tree；
+* 物理上，每个 bucket 实际上是一棵 B+ 树，这些 B+ 树 根据逻辑结构的嵌套关系共同组成一棵巨大的树（不一定是 B+ 树）。
+* cursor 提供顺序和随机两种数据访问方式。
