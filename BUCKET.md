@@ -41,7 +41,7 @@ boltDB 就在 root bucket 上创建了一个新的键值对，键为 bucket1，�
 
 ## Bucket 的物理结构
 
-在 [B+ 树](./B_PLUS_TREE.md) 一节中介绍到 boltDB 使用 B+ 树存储键值数据及其索引，那么 boltDB 是如何利用 B+ 树实现 bucket 的抽象呢？我们从最简单的情形开始理解：
+在 [B+ 树](DATA_AND_INDEX.md) 一节中介绍到 boltDB 使用 B+ 树存储键值数据及其索引，那么 boltDB 是如何利用 B+ 树实现 bucket 的抽象呢？我们从最简单的情形开始理解：
 
 ### 初始化 DB
 

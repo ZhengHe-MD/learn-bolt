@@ -171,7 +171,7 @@ freelist 中存储的内容很简单，就是一个 page id 列表，如下图�
 
 ![freelist_page_layout](./statics/imgs/storage_freelist_page_layout.jpg)
 
-但一个 page 只有 4K，最多只能存放 1K 个 page id，显然可分配空间只有 4MB 肯定不够，如何解决这个问题呢？boltDB 的做法很有意思，它利用了 page header 中的 count 字段，若 count 取值为 uint16 的最大值 (0xFFFF)，则认为该 freelist page 还有 overflow page，并以 page header 之后的第一个 uint64 数值表示 freelist 的总长度。在 boltDB 中，这些 freelist pages 会被连续地存储在 meta pages 后面，因此可以通过总长度一次性存取。
+但一个 page 只有 4K，最多只能存放 1K 个 page id，显然可分配空间只有 4MB 肯定不够，如何解决这个问题呢？boltDB 的做法很有意思，它利用了 page header 中的 count 字段，若 count 取值为 uint16 的最大值 (0xFFFF)，则认为该 freelist page 还有 overflow page，并以 page header 之后的第一个 uint64 数值表示 freelist 的总长度。在 boltDB 中，这些 freelist pages 会被连续地存储在一起，因此可以通过起点和总长度一次性读写。
 
 #### Branch/Leaf Page
 
@@ -425,7 +425,7 @@ type freelist struct {
 
 ![MVCC](./statics/imgs/storage_mvcc.jpg)
 
-当读写事务 A 执行完毕后，读事务 B 开始执行，若紧接着读写事务 C 开始执行，C 就可能修改 B 想要读取的数据，而 B 实际上只想读取 A 执行完毕之后、C 开始执行之前的数据，因此这时候 boltDB 不应该将 A 获取的存储空间释放到 freelist 中允许被分配，而将它置于即将释放的状态，等待 B 读取完成后再彻底释放，否则如果 C 修改了相关数据，B 就可能读到 C 执行完毕后的数据，这不符合 MVCC 的语义。
+当读写事务 A 执行完毕后，读事务 B 开始执行，若紧接着读写事务 C 开始执行，C 就可能修改 B 想要读取的数据，而 B 实际上只想读取 A 执行完毕之后、C 开始执行完毕之前的数据，因此这时候 boltDB 不应该将 A 获取的存储空间释放到 freelist 中允许被分配，而将它置于即将释放的状态，等待 B 执行完毕后再彻底释放，否则如果 C 修改了相关数据，B 就可能读到 C 执行完毕后的数据，这不符合 MVCC 的语义。
 
 ### freelist 的分配策略
 
@@ -435,7 +435,7 @@ freelist 向下游提供 allocate 方法用于分配闲置的数据：
 func (f *freelist) allocate(n int) pgid
 ```
 
-设计上，boltDB 使用极简的处理方式，每次从头遍历 freelist，尝试从中找到一段连续的 n 个 page，成功则将这n 个 page 返回给下游，并将其从 freelist 中去除。由于这些 page 是连续的，allocate 函数只需要告诉下游 n 个 page 的第一个即可。
+设计上，boltDB 使用极简的处理方式。首先 freelist 中的 page id 在任何时候都会被升序排列。每次分配时，顺序遍历 freelist，尝试从中找到一段连续的 n 个 page，成功则将这n 个 page 返回给下游，并将其从 freelist 中去除。由于这些 page 是连续的，allocate 函数只需要告诉下游 n 个 page 的第一个即可。
 
 # 参考
 

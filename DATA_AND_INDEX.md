@@ -4,7 +4,7 @@
 
 以数据主要存放的地点来划分，数据库可以分为 in-memory 和 disk-based 两种。前者将所有数据放进内存中，读写的过程不存在磁盘 io；后者将所有数据存放在磁盘中，读写过程需要频繁与磁盘交互，boltDB 就属于后者。对于 disk-based 数据库来说，数据库的性能瓶颈常常出现在磁盘 io 上，因此磁盘 io 次数常常被用来衡量这类数据库各操作的性能，减少磁盘 io 也就成为了数据库设计的重要目标。B+ 树就是优化磁盘 io 的核心数据结构，它可以很好的将数据查询与块存储的特点想结合，最大程度地减少数据读写过程中的磁盘 io。
 
-通常，磁盘中的一个 page 通常对应 B+ 树上的一个 node，数据库从磁盘中载入数据的过程就是将 page 反序列化成 node 的过程，而将数据写入磁盘的过程就是将 node 序列化成 page 的过程。在 [数据存储层](./STORAGE.md) 一节中，我们了解到的 branch page 和 leaf page 对应的正是 boltDB 中 B+ 树上的 branch node 和 leaf node。由于 boltDB 是键值数据库，非关系型数据库，每条数据只有一个字段，因此也只需要在这个字段上建立索引。在其极简的设计理念作用下，boltDB 直接将数据存储在 B+ 树 索引的 leaf node 上。
+通常，磁盘中的一个 page 通常对应 B+ 树上的一个 node，数据库从磁盘中载入数据的过程就是将 page 反序列化成 node 的过程，而将数据写入磁盘的过程就是将 node 序列化成 page 的过程。在 [数据存储层](STORAGE_AND_MEMORY_MANAGEMENT.md) 一节中，我们了解到的 branch page 和 leaf page 对应的正是 boltDB 中 B+ 树上的 branch node 和 leaf node。由于 boltDB 是键值数据库，非关系型数据库，每条数据只有一个字段，因此也只需要在这个字段上建立索引。在其极简的设计理念作用下，boltDB 直接将数据存储在 B+ 树 索引的 leaf node 上。
 
 为了方便，本文将以 node 为中心来讨论 boltDB 中的 B+ 树的结构及相关算法。
 
