@@ -18,21 +18,21 @@ var Buckets = []string{
 	BucketEvents,
 }
 
-type Dao struct {
+type Store struct {
 	Users   *UserDao
 	Events  *EventDao
 	Buckets *BucketDao
 }
 
-func NewDao(db *bolt.DB) *Dao {
-	return &Dao{
+func NewStore(db *bolt.DB) *Store {
+	return &Store{
 		Users:   NewUserDao(db),
 		Events:  NewEventDao(db),
 		Buckets: NewBucketDao(db),
 	}
 }
 
-func (d *Dao) EnsureBuckets() error {
+func (d *Store) EnsureBuckets() error {
 	for _, bucket := range Buckets {
 		if err := d.Buckets.CreateBucket([]byte(bucket)); err != nil {
 			return err
@@ -41,7 +41,7 @@ func (d *Dao) EnsureBuckets() error {
 	return nil
 }
 
-func (d *Dao) CleanupBuckets() error {
+func (d *Store) CleanupBuckets() error {
 	for _, bucket := range Buckets {
 		if err := d.Buckets.DeleteBucket([]byte(bucket)); err != nil {
 			return err
@@ -75,7 +75,7 @@ func newFakeEvent() *Event {
 	}
 }
 
-func (d *Dao) GenerateFakeUserData(n int) error {
+func (d *Store) GenerateFakeUserData(n int) error {
 	for i := 0; i < n; i++ {
 		if err := d.Users.CreateUser(newFakeUser()); err != nil {
 			return err
@@ -84,7 +84,7 @@ func (d *Dao) GenerateFakeUserData(n int) error {
 	return nil
 }
 
-func (d *Dao) GenerateFakeEventData(n int) error {
+func (d *Store) GenerateFakeEventData(n int) error {
 	for i := 0; i < n; i++ {
 		if err := d.Events.CreateEvent(newFakeEvent()); err != nil {
 			return err
@@ -93,7 +93,7 @@ func (d *Dao) GenerateFakeEventData(n int) error {
 	return nil
 }
 
-func (d *Dao) generateFakeUserDataInBatch(n int) error {
+func (d *Store) generateFakeUserDataInBatch(n int) error {
 	for i := 0; i < n; i++ {
 		if err := d.Users.CreateUserInBatch(newFakeUser()); err != nil {
 			return err
@@ -102,7 +102,7 @@ func (d *Dao) generateFakeUserDataInBatch(n int) error {
 	return nil
 }
 
-func (d *Dao) generateFakeEventDataInBatch(n int) error {
+func (d *Store) generateFakeEventDataInBatch(n int) error {
 	for i := 0; i < n; i++ {
 		if err := d.Events.CreateEventInBatch(newFakeEvent()); err != nil {
 			return err
@@ -112,7 +112,7 @@ func (d *Dao) generateFakeEventDataInBatch(n int) error {
 }
 
 // n should be multiples of ng
-func (d *Dao) GenerateFakeDataConcurrently(n int, ng int) error {
+func (d *Store) GenerateFakeUserDataConcurrently(n int, ng int) error {
 	var wg sync.WaitGroup
 	wg.Add(ng)
 	for i := 0; i < ng; i++ {
@@ -125,7 +125,7 @@ func (d *Dao) GenerateFakeDataConcurrently(n int, ng int) error {
 	return nil
 }
 
-func (d *Dao) GenerateFakeEventConcurrently(n int, ng int) error {
+func (d *Store) GenerateFakeEventConcurrently(n int, ng int) error {
 	var wg sync.WaitGroup
 	wg.Add(ng)
 	for i := 0; i < ng; i++ {
