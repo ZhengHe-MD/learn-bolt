@@ -68,6 +68,8 @@ boltDB 可能是最适熟悉 golang 的工程师最适合阅读的第一个数�
 | 桶                    | bucket                               |
 | 游标                  | cursor                               |
 | 键/值/键值对/键值数据 | key/value/key-value(kv) pair/kv data |
+| 分裂                  | split                                |
+| 合并                  | merge                                |
 
 除此以外，一些名词需要特别提及：
 
