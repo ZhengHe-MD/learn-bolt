@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func estimateDuration(d *lib.Dao, title string, f func(d *lib.Dao) error) (err error) {
+func estimateDuration(d *lib.Store, title string, f func(d *lib.Store) error) (err error) {
 	if err = d.EnsureBuckets(); err != nil {
 		return
 	}
@@ -27,7 +27,7 @@ func estimateDuration(d *lib.Dao, title string, f func(d *lib.Dao) error) (err e
 }
 
 func main() {
-	db, err := bolt.Open("1.db", 0600, &bolt.Options{
+	db, err := bolt.Open("2.db", 0600, &bolt.Options{
 		// 进程 Open DB 会给 DB 文件加锁，只有一个进
 		Timeout:    0,
 		NoGrowSync: false,
@@ -41,22 +41,18 @@ func main() {
 	}
 	defer db.Close()
 
-	d := lib.NewDao(db)
+	store := lib.NewStore(db)
 
-	_ = d.CleanupBuckets()
+	_ = store.CleanupBuckets()
 
 	n := 1000
 
-	_ = estimateDuration(d, "insert data one by one", func(d *lib.Dao) error {
-		return d.GenerateFakeUserData(n)
-	})
-
 	for ng := 1; ng <= 100; ng++ {
 		_ = estimateDuration(
-			d,
+			store,
 			fmt.Sprintf("insert data in batch, with %d goroutine", ng),
-			func(d *lib.Dao) error {
-				return d.GenerateFakeDataConcurrently(n, ng)
+			func(d *lib.Store) error {
+				return d.GenerateFakeUserDataConcurrently(n, ng)
 			})
 	}
 }
