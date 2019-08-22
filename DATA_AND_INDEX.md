@@ -12,19 +12,19 @@
 
 B+ 树中的每个 node 的结构都由 header, element header 列表及数据列表依次构成，branch node 中存储的数据为键，leaf node 中存储的数据为键值对：
 
-![branch/leaf page](./statics/imgs/b_plus_tree_branch_leaf_page.jpg)
+![branch/leaf page](./statics/imgs/data-and-index-branch-leaf-page.jpg)
 
 简化后的 branch node：
 
-![branch page/node](./statics/imgs/b_plus_tree_branch_page_node.jpg)
+![branch page/node](./statics/imgs/data-and-index-branch-page-node.jpg)
 
 简化后的 leaf node：
 
-![leaf page/node](./statics/imgs/b_plus_tree_leaf_page_node.jpg)
+![leaf page/node](./statics/imgs/data-and-index-leaf-page-node.jpg)
 
 利用简化后的 branch node 和 leaf node，就能够构建出一棵合法的 B+ 树：
 
-![b+tree](./statics/imgs/b_plus_tree.jpg)
+![b+tree](./statics/imgs/data-and-index-b-plus-tree.jpg)
 
 这棵树的特性基本与教科书上的类似，但略有不同：
 
@@ -47,11 +47,11 @@ B+ 树中的每个 node 的结构都由 header, element header 列表及数据�
 
 插入数据可能造成 node 中的数据超过单个 page 大小：
 
-![oversize-page](./statics/imgs/b_plus_tree_oversize_page.jpg)
+![oversize-page](./statics/imgs/data-and-index-oversize-page.jpg)
 
 同时也要考虑单个键值对数据过大的情况：
 
-![oversized-kv](./statics/imgs/b_plus_tree_oversized_kv.jpg)
+![oversized-kv](./statics/imgs/data-and-index-oversized-kv.jpg)
 
 
 
@@ -59,7 +59,7 @@ B+ 树中的每个 node 的结构都由 header, element header 列表及数据�
 
 删除数据可能使得 node 处于不平衡的状态，即键值对删除后 node 中的总数据量少于最低要求（由 FillPercent 决定）：
 
-![unbalanced-node](./statics/imgs/b_plus_tree_unbalanced_node.jpg)
+![unbalanced-node](./statics/imgs/data-and-index-unbalanced-node.jpg)
 
 当删除操作导致 node 的填充率低于要求时，不会执行合并 sibling node 的操作，但它会在结束前将该 node 标记为 unbalanced，等到数据将要写入磁盘时再统一合并。
 
@@ -76,15 +76,15 @@ B+ 树中的每个 node 的结构都由 header, element header 列表及数据�
 
 执行过删除操作的 leaf node 都会被打上 unbalanced 的记号，而这些记号的消费者正是 rebalance，它负责将填充率不足 FillPercent 的 node 与对应的 sibling node 合并，以下图为例（图中虚线为填充率）：
 
-![rebalance-1](./statics/imgs/b_plus_tree_rebalance_1.jpg)
+![rebalance-1](./statics/imgs/data-and-index-rebalance-1.jpg)
 
 当 L2 的数据总量不足，rebalance 找到它的 sibling node L3，将二者合并，并更新它们的 parent node B2：
 
-![rebalance-2](./statics/imgs/b_plus_tree_rebalance_2.jpg)
+![rebalance-2](./statics/imgs/data-and-index-rebalance-2.jpg)
 
 这时，B2 的数据总量也下降到 FillPercent 之下，rebalance 需要递归地继续合并 B2 与 B3：
 
-![rebalance-3](./statics/imgs/b_plus_tree_rebalance_3.jpg)
+![rebalance-3](./statics/imgs/data-and-index-rebalance-3.jpg)
 
 如果有必要，这样的递归过程将持续到 root node 为止。
 
@@ -100,21 +100,21 @@ rebalance 之后，内存中的 B+ 树满足：所有 nodes 的数据填充率�
 
 spill 本意是 ”水太满而从容器中溢出“，这里指的就是 node 中填充的数据太多，溢出到多个 page，举例如下：
 
-![spill-1](./statics/imgs/b_plus_tree_spill_1.jpg)
+![spill-1](./statics/imgs/data-and-index-spill-1.jpg)
 
 显然 L1 中填充率过高，spill 需要将它拆分成多个 nodes：
 
-![spill-2](./statics/imgs/b_plus_tree_spill_2.jpg)
+![spill-2](./statics/imgs/data-and-index-spill-2.jpg)
 
 拆分 L1的过程会导致它的 parent node 填充率升高，进而可能引发 parent node 的拆分：
 
-![spill-3](./statics/imgs/b_plus_tree_spill_3.jpg)
+![spill-3](./statics/imgs/data-and-index-spill-3.jpg)
 
 如果有必要，这样的递归会到达 root node 为止。
 
 parent node 超载的原因除了键值对数量过多，也可能是单个数据过大，如达到多个 pages 大小，这是 spill 不会再将 node 拆分，而是保留这些超载的 node：
 
-![spill-4](./statics/imgs/b_plus_tree_spill_4.jpg)
+![spill-4](./statics/imgs/data-and-index-spill-4.jpg)
 
 在序列化时，这种超载的 node 会被转化为 overflow page 存储。
 
