@@ -210,8 +210,8 @@ Page count statistics
         Number of logical leaf pages: 80
         Number of physical leaf overflow pages: 0
 ...
-$ ls -alh 2.db
--rw-------  1 hezheng  staff   512K Aug 21 13:22 2.db
+$ du -h 2.db
+356K    2.db
 ```
 
 在步骤 2 后再次查看：
@@ -224,8 +224,8 @@ Page count statistics
         Number of logical leaf pages: 0
         Number of physical leaf overflow pages: 0
 ...
-$ ls -alh 2.db
--rw-------  1 hezheng  staff   512K Aug 21 13:22 2.db
+$ du -h 2.db
+356K    2.db
 ```
 
 可以看出，boltDB 并未将删除后多出的磁盘空间还给文件系统。那么 **boltDB 如何管理多出的磁盘空间呢**？这个问题被称为 File Organization，而 boltDB 使用的方法被称为 Heap File Organization，可以类比程序运行时的 Heap 内存管理。在 boltDB 中负责管理这些磁盘空间的模块叫作 **freelist**。
