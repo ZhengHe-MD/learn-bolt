@@ -54,7 +54,7 @@ ID       TYPE       ITEMS  OVRFLW
 
 即：一个空的 boltDB 实例由 4 个 page 构成，其中 2 个 mea page、1 个 freelist page 和 1 个 leaf page：
 
-![db_layout](./statics/imgs/storage_db_layout.jpg)
+![db_layout](statics/imgs/storage-and-cache-empty-instance-layout.jpg)
 
 值得注意的是：**id 相邻的 page 在物理存储上同样相邻**。
 
