@@ -143,7 +143,7 @@ func (db *DB) Update(fn func(*Tx) error) error {
 
 boltDB 最多只允许一个读写事务同时进行，因此它实现 MVCC 时不需要考虑多个读写事务同时进行的场景。只允许一个读写事务同时进行是否意味着 boltDB 只需要同时保存最多 2 个版本的数据？看个例子：
 
-![boltdb-mvcc](/Users/hezheng/Desktop/Screen Shot 2019-08-10 at 7.09.35 PM.jpg)
+![boltdb-mvcc](./statics/imgs/tx-boltdb-mvcc-example.jpg)
 
 横轴上方是读写事务，下方是只读事务。在 t3 到 t4 之间，只读事务 RO-Tx-1 要求 v1 版本数据还保存在数据库中；RO-Tx-2 要求 v2 版本数据还保存在数据库中；RO-Tx-3 要求 v3 版本数据还保存在数据库中。因此即使只允许一个读写事务同时进行，数据库仍然需要保存多版本的数据。
 
@@ -153,7 +153,7 @@ boltDB 最多只允许一个读写事务同时进行，因此它实现 MVCC 时�
 
 在数据存储层一节中介绍过，boltDB 将数据库文件分成大小相等的若干块，每块是一个 page，如下图所示：
 
-![boltdb-page](/Users/hezheng/Desktop/Screen Shot 2019-08-10 at 7.33.44 PM.jpg)
+![boltdb-page](./statics/imgs/tx-boltdb-page.jpg)
 
 那么我们是否可以以 page 为版本管理单位，实现 MVCC？如果每个 page 都带有版本，每当 page 中的数据将被读写事务修改时，就申请新的 pages 将修改后的数据写入其中，旧版本的 page 直到没有只读事务依赖它时才被回收。使用这种方案使得 MVCC 的实现无需考虑新旧版本共存于同一个 page 的情况，用空间换取了设计复杂度的降低，符合 boltDB 的设计哲学。
 
