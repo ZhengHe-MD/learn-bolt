@@ -21,7 +21,7 @@ boltDB 可能是最适熟悉 golang 的工程师最适合阅读的第一个数�
   * 同时允许多个只读事务和最多一个读写事务运行，有并发场景，有事务隔离，但处理方式极简
   * 使用 mmap 作读缓存，缓存管理逻辑达到最简
 * 源码结构简单，从存储层到对外暴露的 api 抽象分层思路清晰：
-  * 存储与缓存层：page.go, freelist.go, bolt_xxx.go
+  * 存储与缓存：page.go, freelist.go, bolt_xxx.go
   * 数据与索引：node.go
   * 桶：bucket.go, cursor.go
   * 事务：tx.go
