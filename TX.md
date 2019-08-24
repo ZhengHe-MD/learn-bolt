@@ -39,7 +39,7 @@ db, err := bolt.Open("1.db", 0600, &bolt.Options{ReadOnly: true})
 
 ## 事务执行过程与 ACID
 
-boltDB 有两种事务类型：只读事务和读写事务。
+按是否修改数据来划分，boltDB 有两种事务类型：只读事务和读写事务。
 
 ### 只读事务
 
@@ -73,7 +73,7 @@ func (db *DB) View(fn func(*Tx) error) error {
 }
 ```
 
-这种由 boltDB 管理事务生命周期，用户只构建事务逻辑的事务，被称为 managed。
+这种由 boltDB 管理事务生命周期，用户只构建事务逻辑的事务，被称为隐式事务。
 
 ### 读写事务
 
@@ -109,7 +109,7 @@ func (db *DB) Update(fn func(*Tx) error) error {
 }
 ```
 
-类似地，利用 db.Update 执行的读写事务也是 managed。
+类似地，利用 db.Update 执行的读写事务也是隐式事务。
 
 ### ACID
 

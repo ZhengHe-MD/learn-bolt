@@ -59,6 +59,7 @@ boltDB 可能是最适熟悉 golang 的工程师最适合阅读的第一个数�
 | 事务                  | transaction/tx                       |
 | 读写事务              | read-write transaction/tx            |
 | 只读事务              | read-only transaction/tx             |
+| 隐式事务              | managed transaction/tx               |
 | 桶                    | bucket                               |
 | 游标                  | cursor                               |
 | 键/值/键值对/键值数据 | key/value/key-value(kv) pair/kv data |
