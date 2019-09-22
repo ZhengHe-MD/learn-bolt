@@ -9,27 +9,27 @@ import (
 )
 
 func main() {
-	db, err := bolt.Open("1.db", 0600, nil)
+	db, err := bolt.Open("3.db", 0600, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	d := lib.NewDao(db)
+	store := lib.NewStore(db)
 
-	_ = d.CleanupBuckets()
-	_ = d.EnsureBuckets()
+	_ = store.CleanupBuckets()
+	_ = store.EnsureBuckets()
 
 	n := 1000
 
-	if err = d.GenerateFakeEventConcurrently(n, 8); err != nil {
+	if err = store.GenerateFakeEventConcurrently(n, 8); err != nil {
 		log.Fatal(err)
 	}
 
 	start := time.Now().Unix() - 60*60*24*90
 	end := time.Now().Unix() - 60*60*24*30
 
-	events, err := d.Events.GetEventsBetween(start, end)
+	events, err := store.Events.GetEventsBetween(start, end)
 	if err != nil {
 		log.Fatal(err)
 	}
