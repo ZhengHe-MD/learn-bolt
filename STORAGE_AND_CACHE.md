@@ -56,7 +56,7 @@ ID       TYPE       ITEMS  OVRFLW
 
 ![db_layout](statics/imgs/storage-and-cache-empty-instance-layout.jpg)
 
-值得注意的是：**id 相邻的 page 在物理存储上同样相邻**。
+值得注意的是：**id 相邻的 page 在数据库文件中同样相邻**。
 
 #### Page 类型与布局
 
