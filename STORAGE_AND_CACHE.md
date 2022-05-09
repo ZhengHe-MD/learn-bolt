@@ -182,10 +182,12 @@ boltDB 通过引入 overflow page 来解决这个问题，当需要存储超过�
 freelist page 中的元素都是 pgid，没有 element header，没有各元素的位移信息，因此可能出现 freelist 的实际长度可能超过 count（uint16） 的上限 65535 的情况，boltDB 采用了比较讨巧的处理方式：
 
 ```go
-if p.count = 0xFFF {
-  // first 8 bytes after page header is considered as the real number
-} else {
-	// p.count is the number of elements
+// If the page.count is at the max uint16 value (64k) then it's considered
+// an overflow and the size of the freelist is stored as the first element.
+idx, count := 0, int(p.count)
+if count == 0xFFFF {
+	idx = 1
+	count = int(((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[0])
 }
 ```
 
