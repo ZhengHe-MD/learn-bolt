@@ -65,7 +65,7 @@ B+ 树中的每个 node 的结构都由 header, element header 列表及数据�
 
 ### rebalance/spill
 
-在读写事务 commit 时，boltDB 通过两个操作 — rebalance 和 spill 来保证即将写入磁盘的 B+ 树：
+在读写事务 commit 时，boltDB 通过两个操作 — rebalance 和 spill 来保证即将写入磁盘的是一棵合法的 B+ 树：
 
 * rebalance：将填充率不足的 node 与 sibling node 合并
 * spill：将填充率过高的 node 分裂成多个较小的 nodes
@@ -112,7 +112,7 @@ spill 本意是 ”水太满而从容器中溢出“，这里指的就是 node �
 
 如果有必要，这样的递归会到达 root node 为止。
 
-parent node 超载的原因除了键值对数量过多，也可能是单个数据过大，如达到多个 pages 大小，这是 spill 不会再将 node 拆分，而是保留这些超载的 node：
+parent node 超载的原因除了键值对数量过多，也可能是单个数据过大，如达到多个 pages 大小，这时 spill 不会再将 node 拆分，而是保留这些超载的 node：
 
 ![spill-4](./statics/imgs/data-and-index-spill-4.jpg)
 
