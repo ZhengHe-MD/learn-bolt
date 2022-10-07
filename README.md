@@ -29,19 +29,19 @@ Bolt 可能是最适合 Go 语言工程师阅读的第一个数据库项目，�
 * 数据结构：所有数据存储在同一个树形结构中
 * 索引结构：键值数据天然地只有主键索引，使用经典的 B+ 树
 * 事务隔离：仅允许多个只读事务和最多一个读写事务同时运行
-* 缓存管理：使用 mmap 作为读缓存，仅管理写缓存
+* 缓存管理：仅管理写缓存，利用 mmap 管理读缓存
 
 ## 阅读建议
 
 每篇短文覆盖一个话题，描述对应模块的实现。本系列文章将自底向上地介绍 Bolt，各个模块相对独立，顺序阅读和单篇阅读皆可。
 
-| 主题 | 源码 |
-|------|-----|
+| 主题                              | 源码                                |
+| ------------------------------- | --------------------------------- |
 | [存储与缓存](./STORAGE_AND_CACHE.md) | page.go, freelist.go, bolt_xxx.go |
-| [数据与索引](./DATA_AND_INDEX.md) | node.go |
-| [桶](./BUCKET.md) | bucket.go, cursor.go |
-| [事务](./TX.md) | tx.go |
-| [API] [TODO] | db.go |
+| [数据与索引](./DATA_AND_INDEX.md)    | node.go                           |
+| [桶](./BUCKET.md)                | bucket.go, cursor.go              |
+| [事务](./TX.md)                   | tx.go                             |
+| [API] [TODO]                    | db.go                             |
 
 ## 名词解释
 
@@ -49,13 +49,14 @@ Bolt 可能是最适合 Go 语言工程师阅读的第一个数据库项目，�
 
 为避免专业术语的名称歧义，除已经有稳定中文翻译的词语外，其它词语将保留原始英文形式。下面是一份核心专业词语的中英对照表，供读者参考：
 
-| 中文         | 英文                                   |
-|-------------|------------------------------------|
-| B+ 树          | B+Tree                               |
+| 中文           | 英文                                   |
+| ------------ | ------------------------------------ |
+| B+ 树         | B+Tree                               |
 | 事务           | transaction/tx                       |
 | 读写事务         | read-write transaction/tx            |
 | 只读事务         | read-only transaction/tx             |
-| 隐式事务         | managed transaction/tx               |
+| 隐式事务         | managed/implicit transaction/tx     |
+| 显式事务       | explicit transaction/tx              |
 | 桶            | bucket                               |
 | 游标           | cursor                               |
 | 键/值/键值对/键值数据 | key/value/key-value(kv) pair/kv data |
@@ -73,7 +74,7 @@ Bolt 可能是最适合 Go 语言工程师阅读的第一个数据库项目，�
 
 ### Bolt 与 Bolt 实例
 
-Bolt 指这个数据库[项目](https://github.com/boltdb/bolt)本身，而 Bolt 实例指利用 api 创建的一个新的数据库，也指文件系统中存储对应数据的二进制文件。
+Bolt 指这个[项目](https://github.com/boltdb/bolt)本身，而 Bolt 实例指利用 api 创建的一个新的数据库，也指文件系统中存储对应数据的二进制文件。
 
 ## 参考
 
@@ -83,5 +84,5 @@ Bolt 指这个数据库[项目](https://github.com/boltdb/bolt)本身，而 Bolt
   - [CMU 15-445/645 Intro to Database Systems](https://www.youtube.com/playlist?list=PLSE8ODhjZXja3hgmuwhf89qboV1kOxMx7)
 * Book
   - [Designing Data-Intensive Applications](https://dataintensive.net/)
-  
+
 转载请注明出处为本项目: https://github.com/ZhengHe-MD/learn-bolt
