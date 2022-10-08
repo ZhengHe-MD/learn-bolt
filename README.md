@@ -57,6 +57,8 @@ Bolt 可能是最适合 Go 语言工程师阅读的第一个数据库项目，�
 | 只读事务         | read-only transaction/tx             |
 | 隐式事务         | managed/implicit transaction/tx     |
 | 显式事务       | explicit transaction/tx              |
+| 提交          | commit |
+| 回滚          | rollback |
 | 桶            | bucket                               |
 | 游标           | cursor                               |
 | 键/值/键值对/键值数据 | key/value/key-value(kv) pair/kv data |
