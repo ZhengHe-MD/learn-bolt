@@ -79,11 +79,8 @@ Bolt 指这个[项目](https://github.com/boltdb/bolt)本身，而 Bolt 实例�
 
 ## 参考
 
-* Code
-  * [Github: bolt/boltdb](https://github.com/boltdb/bolt)
-* Video
-  - [CMU 15-445/645 Intro to Database Systems](https://www.youtube.com/playlist?list=PLSE8ODhjZXja3hgmuwhf89qboV1kOxMx7)
-* Book
-  - [Designing Data-Intensive Applications](https://dataintensive.net/)
+* [Github: bolt/boltdb](https://github.com/boltdb/bolt)
+* [CMU 15-445/645 Intro to Database Systems](https://www.youtube.com/playlist?list=PLSE8ODhjZXja3hgmuwhf89qboV1kOxMx7)
+* [Designing Data-Intensive Applications](https://dataintensive.net/)
 
 转载请注明出处为本项目: https://github.com/ZhengHe-MD/learn-bolt
