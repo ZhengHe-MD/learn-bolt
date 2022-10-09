@@ -35,13 +35,12 @@ Bolt 可能是最适合 Go 语言工程师阅读的第一个数据库项目，�
 
 每篇短文覆盖一个话题，描述对应模块的实现。本系列文章将自底向上地介绍 Bolt，各个模块相对独立，顺序阅读和单篇阅读皆可。
 
-| 主题                              | 源码                                |
+| 主题                              | 源码                             |
 | ------------------------------- | --------------------------------- |
-| [存储与缓存](./STORAGE_AND_CACHE.md) | page.go, freelist.go, bolt_xxx.go |
-| [数据与索引](./DATA_AND_INDEX.md)    | node.go                           |
-| [桶](./BUCKET.md)                | bucket.go, cursor.go              |
-| [事务](./TX.md)                   | tx.go                             |
-| [API] [TODO]                    | db.go                             |
+| [存储与缓存](./STORAGE_AND_CACHE.md) | page.go, freelist.go, db.go    |
+| [数据与索引](./DATA_AND_INDEX.md)    | node.go                        |
+| [桶](./BUCKET.md)                   | bucket.go, cursor.go           |
+| [事务](./TX.md)                     | tx.go                          |
 
 ## 名词解释
 
@@ -55,10 +54,10 @@ Bolt 可能是最适合 Go 语言工程师阅读的第一个数据库项目，�
 | 事务           | transaction/tx                       |
 | 读写事务         | read-write transaction/tx            |
 | 只读事务         | read-only transaction/tx             |
-| 隐式事务         | managed/implicit transaction/tx     |
-| 显式事务       | explicit transaction/tx              |
-| 提交          | commit |
-| 回滚          | rollback |
+| 隐式事务         | managed/implicit transaction/tx      |
+| 显式事务         | explicit transaction/tx              |
+| 提交           | commit                               |
+| 回滚           | rollback                             |
 | 桶            | bucket                               |
 | 游标           | cursor                               |
 | 键/值/键值对/键值数据 | key/value/key-value(kv) pair/kv data |
